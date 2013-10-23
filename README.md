@@ -1,4 +1,4 @@
-segmentio
+`ardoq.analytics-clj`
 =========
 
 Idiomatic Clojure wrapper for the segmet.io java api.
@@ -42,18 +42,18 @@ With Maven:
 
 ```clojure
 
-segmentio.analytics> (def client (initialize "<api-token>"))
+ardoq.analytics-clj> (def client (initialize "<secret>"))
 
-segmentio.analytics> (identify client "user-id" {:email "test@example.org"})
+ardoq.analytics-clj> (identify client "user-id" {:email "test@example.org"})
 
-segmentio.analytics> (track client "user-id" "Logged in" {:plan {:type "trial" :started (DateTime.)}})
+ardoq.analytics-clj> (track client "user-id" "Logged in" {:plan {:type "trial" :started (DateTime.)}})
 
 ;;You can also use options like :contet, timestamp and a callback function. See api for details
-segmentio.analytics> (track client "user-id" "Played song" {:title "Foobar"} 
+ardoq.analytics-clj> (track client "user-id" "Played song" {:title "My title"} 
                          {:context {:ip "10.0.0.1"} 
                           :callback (fn [s m] (println "\n\nDONE!"))})
 
-segmentio.analytics> (make-alias client "user-id" "foobar")
+ardoq.analytics-clj> (make-alias client "user-id" "real-id")
 
 ```
 

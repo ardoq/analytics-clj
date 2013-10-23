@@ -1,4 +1,4 @@
-(defproject segmentio "0.1.0"
+(defproject analytics-clj "0.1.1"
   :description "Idiomatic Clojure wrapper for the segment.io Java client"
   :url "http://ardoq.com"
   :license {:name "MIT License"

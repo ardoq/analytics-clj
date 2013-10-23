@@ -1,4 +1,4 @@
-(ns segmentio.analytics
+(ns ardoq.analytics-clj
   (:import org.joda.time.DateTime
            [com.github.segmentio AnalyticsClient Options Defaults]
            [com.github.segmentio.models Traits Context Callback EventProperties]))
