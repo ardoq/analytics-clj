@@ -1,4 +1,4 @@
-`ardoq.analytics-clj`
+`analytics-clj`
 =========
 
 Idiomatic Clojure wrapper for the segmet.io java api.
@@ -23,16 +23,16 @@ If you are using Maven, add the following repository definition to your `pom.xml
 With Leiningen:
 
 ```clj
-[segmentio "0.1.0"]
+[analytics-clj "0.1.1"]
 ```
 
 With Maven:
 
 ```xml
 <dependency>
-  <groupId>segmentio</groupId>
-  <artifactId>segmentio</artifactId>
-  <version>0.1.0</version>
+  <groupId>analytics-clj</groupId>
+  <artifactId>analytics-clj</artifactId>
+  <version>0.1.1</version>
 </dependency>
 
 ```
