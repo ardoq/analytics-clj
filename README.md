@@ -9,7 +9,7 @@ See [segmet.io java library](https://segment.io/libraries/java) for more info.
 
 ##Artifacts
 
-Artifacts are [released to clojars](https://clojars.org/segmentio).
+Artifacts are [released to clojars](https://clojars.org/analytics-clj).
 
 If you are using Maven, add the following repository definition to your `pom.xml`:
 
