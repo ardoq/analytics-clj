@@ -3,6 +3,8 @@
 
 Idiomatic Clojure wrapper for the segmet.io java api.
 
+[API](http://ardoq.github.io/analytics-clj/)
+
 See [segmet.io java library](https://segment.io/libraries/java) for more info.
 
 ##Artifacts
