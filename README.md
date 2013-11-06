@@ -1,11 +1,11 @@
 `analytics-clj`
 =========
 
-Idiomatic Clojure wrapper for the segmet.io java api.
+Idiomatic Clojure wrapper for the Segment.io Java API.
 
 [API](http://ardoq.github.io/analytics-clj/)
 
-See [segmet.io java library](https://segment.io/libraries/java) for more info.
+See [Segment.io Java library](https://segment.io/libraries/java) for more info.
 
 ##Artifacts
 
@@ -36,7 +36,6 @@ With Maven:
   <artifactId>analytics-clj</artifactId>
   <version>0.1.1</version>
 </dependency>
-
 ```
 
 ## Usage
