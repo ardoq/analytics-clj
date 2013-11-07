@@ -34,17 +34,17 @@
    Options:
    :timestamp - a DateTime representing when the aliasing took place. If the alias just happened, leave it blank and we'll
                 use the server's time.
-   :context - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
+   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
    :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
                same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
                Example: (fn [^Boolean success ^String message] ...)"
   ([^AnalyticsClient client ^String user-id]
      (identify client user-id nil))
-  ([^AnalyticsClient client ^String user-id traits & [{:keys [timestamp context callback]}]]
+  ([^AnalyticsClient client ^String user-id traits & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           t (reduce (fn [t [k v]] (.put t (name k) v)) (Traits.) traits)
-           c (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) context)]
-       (.identify client user-id t timestamp c the-callback))))
+           traits (reduce (fn [t [k v]] (.put t (name k) v)) (Traits.) traits)
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+       (.identify client user-id traits timestamp c the-callback))))
 
 
 (defn track
@@ -58,7 +58,7 @@
    Options:
    :timestamp - a DateTime representing when the identify took place.If the identify just happened,leave it blank and we'll
                 use the server's time. If you are importing data from the past, make sure you provide this argument.
-   :context - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
+   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
    :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
                same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
                Example: (fn [^Boolean success ^String message] ...):"
@@ -66,11 +66,11 @@
      (track client user-id event {}))
   ([^AnalyticsClient client ^String user-id ^String event properties]
      (track client user-id event properties {} {}))
-  ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp context callback]}]]
+  ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           props (EventProperties. (into-array Object (flatten (vec (map-keys name properties)))))
-           c (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) context)]
-       (.track client user-id event props timestamp c the-callback))))
+           properties (EventProperties. (into-array Object (flatten (vec (map-keys name properties)))))
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+       (.track client user-id event properties timestamp options the-callback))))
 
 (defn make-alias
   "Aliases an anonymous user into an identified user.
@@ -81,15 +81,15 @@
    Options:
    :timestamp - a DateTime representing when the identify took place.If the identify just happened,leave it blank and we'll
                 use the server's time. If you are importing data from the past, make sure you provide this argument.
-   :context - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
+   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
    :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
                same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
                Example: (fn [^Boolean success ^String message] ...)"
   ([^AnalyticsClient client ^String from ^String to] (make-alias client from to {}))
-  ([^AnalyticsClient client ^String from ^String to & [{:keys [timestamp context callback]}]]
+  ([^AnalyticsClient client ^String from ^String to & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           c (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) context)]
-       (.alias client from to timestamp context the-callback))))
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+       (.alias client from to timestamp options the-callback))))
 
 (defn flush-queue
   "Call flush to block until all the messages are flushed to the server. This is especially useful when turning off your web server
