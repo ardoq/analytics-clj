@@ -26,6 +26,9 @@
                                 (.setMaxQueueSize max-queue-size)
                                 (.setTimeout timeout)))))
 
+(defn context []
+  (.put (Context.) "library" "analytics-clj"))
+
 (defn identify
   "Identifying a user ties all of their actions to an id, and associates user traits to that id.
 
@@ -43,7 +46,7 @@
   ([^AnalyticsClient client ^String user-id traits & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
            traits (reduce (fn [t [k v]] (.put t (name k) v)) (Traits.) traits)
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
        (.identify client user-id traits timestamp c the-callback))))
 
 
@@ -69,7 +72,7 @@
   ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
            properties (EventProperties. (into-array Object (flatten (vec (map-keys name properties)))))
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
        (.track client user-id event properties timestamp options the-callback))))
 
 (defn make-alias
@@ -88,7 +91,7 @@
   ([^AnalyticsClient client ^String from ^String to] (make-alias client from to {}))
   ([^AnalyticsClient client ^String from ^String to & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
+           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
        (.alias client from to timestamp options the-callback))))
 
 (defn flush-queue
