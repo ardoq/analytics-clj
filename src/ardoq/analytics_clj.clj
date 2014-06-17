@@ -44,7 +44,7 @@
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
            traits (reduce (fn [t [k v]] (.put t (name k) v)) (Traits.) traits)
            options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
-       (.identify client user-id traits timestamp c the-callback))))
+       (.identify client user-id traits timestamp options the-callback))))
 
 
 (defn track
