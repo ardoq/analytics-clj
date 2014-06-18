@@ -68,7 +68,7 @@
      (track client user-id event properties {} {}))
   ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           properties (EventProperties. (into-array Object (flatten (vec (map-keys name properties)))))
+           properties (EventProperties. (into-array Object (apply concat (vec (map-keys name properties)))))
            options (reduce (fn [t [k v]] (.put t (name k) v)) (Context.) options)]
        (.track client user-id event properties timestamp options the-callback))))
 
