@@ -49,6 +49,13 @@
            options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
        (.identify client user-id traits timestamp options the-callback))))
 
+(defn full-name 
+  "Returns the full name of the map key. If it's a symbol, retrieves the full namespaced name and returns that instead."
+  [k]
+  (if (keyword? k)
+    (str (.-sym k))
+    (name k)))
+
 
 (defn track
   "Whenever a user triggers an event, you’ll want to track it.
@@ -71,7 +78,7 @@
      (track client user-id event properties {} {}))
   ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp options callback]}]]
      (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           properties (EventProperties. (into-array Object (apply concat (vec (map-keys name properties)))))
+           properties (EventProperties. (into-array Object (apply concat (vec (map-keys full-name properties)))))
            options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
        (.track client user-id event properties timestamp options the-callback))))
 
