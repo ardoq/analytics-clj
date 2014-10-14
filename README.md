@@ -49,9 +49,9 @@ ardoq.analytics-clj> (identify client "user-id" {:email "test@example.org"})
 
 ardoq.analytics-clj> (track client "user-id" "Logged in" {:plan {:type "trial" :started (DateTime.)}})
 
-;;You can also use options like :contet, timestamp and a callback function. See api for details
+;;You can also pass an additional map containing :options, :timestamp and :callback keys. See api for details
 ardoq.analytics-clj> (track client "user-id" "Played song" {:title "My title"} 
-                         {:context {:ip "10.0.0.1"} 
+                         {:options {:ip "10.0.0.1"} 
                           :callback (fn [s m] (println "\n\nDONE!"))})
 
 ardoq.analytics-clj> (make-alias client "user-id" "real-id")
