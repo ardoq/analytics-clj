@@ -1,7 +1,11 @@
 (ns ardoq.analytics-clj
-  (:import org.joda.time.DateTime
-           [com.github.segmentio AnalyticsClient Options Defaults]
-           [com.github.segmentio.models Traits Context Callback EventProperties]))
+  (:import
+    [com.github.segmentio AnalyticsClient Config Defaults]
+    [com.github.segmentio.models Traits Context Props Options]))
+
+(def context
+  (doto (Context.)
+    (.put "library" "analytics-clj")))
 
 (defn- map-keys
   "Maps a function over the keys of an associative collection."
@@ -9,6 +13,28 @@
   (persistent! (reduce-kv #(assoc! %1 (f %2) %3)
                           (transient (empty coll))
                           coll)))
+
+(defn- identify*
+  [client user-id traits options]
+  (.identify client user-id traits options))
+
+(defn- track* [client user-id event properties options]
+  (.track client user-id event properties options))
+
+(defn- make-alias*
+  [client from to options]
+  (.alias client from to options))
+
+(defn- create-options [timestamp integration anonymous-id]
+  (let [options (doto (Options.)
+                  (.setContext context))]
+    (when timestamp
+      (.setTimestamp options timestamp))
+    (when integration
+      (.setIntegration options integration true))
+    (when anonymous-id
+      (.setAnonymousId options anonymous-id))
+    options))
 
 (defn initialize
   "Initializes and returns a client with given secret.
@@ -18,44 +44,37 @@
    :max-queue-size - maximum number of messages to allow into the queue before no new messages are accepted. Default value 10000.
    :timeout - number of milliseconds to wait before timing out the request. Default value 10000."
   ([secret]
-     (initialize secret {}))
+    (initialize secret {}))
   ([secret {:keys [host max-queue-size timeout]
-            :or {host Defaults/HOST max-queue-size Defaults/MAX_QUEUE_SIZE timeout Defaults/TIMEOUT}}]
-     (AnalyticsClient. secret (doto (Options.)
-                                (.setHost host)
-                                (.setMaxQueueSize max-queue-size)
-                                (.setTimeout timeout)))))
-
-(defn context []
-  (.put (Context.) "library" "analytics-clj"))
+            :or   {host Defaults/HOST max-queue-size Defaults/MAX_QUEUE_SIZE timeout Defaults/TIMEOUT}}]
+    (AnalyticsClient. secret (doto (Config.)
+                               (.setHost host)
+                               (.setMaxQueueSize max-queue-size)
+                               (.setTimeout timeout)))))
 
 (defn identify
   "Identifying a user ties all of their actions to an id, and associates user traits to that id.
 
    Can also take an empty map of traits if you need to specify options, but no traits.
 
-   Options:
-   :timestamp - a DateTime representing when the aliasing took place. If the alias just happened, leave it blank and we'll
-                use the server's time.
-   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
-   :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
-               same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
-               Example: (fn [^Boolean success ^String message] ...)"
+   Options: a map with keys:
+      :timestamp - DateTime, useful for backdating events
+      :integration - this call will be sent to the target integration
+      :anonymous-id - the cookie / anonymous Id of this visitor
+  "
   ([^AnalyticsClient client ^String user-id]
-     (identify client user-id nil))
-  ([^AnalyticsClient client ^String user-id traits & [{:keys [timestamp options callback]}]]
-     (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           traits (reduce (fn [t [k v]] (.put t (name k) v)) (Traits.) traits)
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
-       (.identify client user-id traits timestamp options the-callback))))
+    (identify client user-id nil))
+  ([^AnalyticsClient client ^String user-id traits & [{:keys [timestamp integration anonymous-id]}]]
+    (let [traits (reduce (fn [t [k v]] (.put ^Traits t (name k) v)) (Traits.) traits)
+          options (create-options timestamp integration anonymous-id)]
+      (identify* client user-id traits options))))
 
-(defn full-name 
+(defn full-name
   "Returns the full name of the map key. If it's a symbol, retrieves the full namespaced name and returns that instead."
   [k]
   (if (keyword? k)
     (str (.-sym k))
     (name k)))
-
 
 (defn track
   "Whenever a user triggers an event, you’ll want to track it.
@@ -65,22 +84,19 @@
    properties - map with items that describe the event in more detail. This argument is optional, but highly recommended—you’ll find these
                properties extremely useful later.
 
-   Options:
-   :timestamp - a DateTime representing when the identify took place.If the identify just happened,leave it blank and we'll
-                use the server's time. If you are importing data from the past, make sure you provide this argument.
-   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
-   :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
-               same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
-               Example: (fn [^Boolean success ^String message] ...):"
+   Options: a map with keys:
+      :timestamp - DateTime, useful for backdating events
+      :integration - this call will be sent to the target integration
+      :anonymous-id - the cookie / anonymous Id of this visitor
+  "
   ([^AnalyticsClient client ^String user-id ^String event]
-     (track client user-id event {}))
+    (track client user-id event {}))
   ([^AnalyticsClient client ^String user-id ^String event properties]
-     (track client user-id event properties {} {}))
-  ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp options callback]}]]
-     (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           properties (EventProperties. (into-array Object (apply concat (vec (map-keys full-name properties)))))
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
-       (.track client user-id event properties timestamp options the-callback))))
+    (track client user-id event properties {} {}))
+  ([^AnalyticsClient client ^String user-id ^String event properties & [{:keys [timestamp integration anonymous-id]}]]
+    (let [properties (Props. (into-array Object (apply concat (vec (map-keys full-name properties)))))
+          options (create-options timestamp integration anonymous-id)]
+      (track* client user-id event properties options))))
 
 (defn make-alias
   "Aliases an anonymous user into an identified user.
@@ -88,18 +104,15 @@
    from - the anonymous user's id before they are logged in.
    to - the identified user's id after they're logged in.
 
-   Options:
-   :timestamp - a DateTime representing when the identify took place.If the identify just happened,leave it blank and we'll
-                use the server's time. If you are importing data from the past, make sure you provide this argument.
-   :options - map that describes anything that doesn't fit into this event's properties (such as the user's IP {:ip 'some-ip'})
-   :callback - a callback that is fired when this track's batch is flushed to the server. Note: this callback is fired on the
-               same thread as the async event loop that made the request. You should not perform any kind of long running operation on it.
-               Example: (fn [^Boolean success ^String message] ...)"
+   Options: a map with keys:
+      :timestamp - DateTime, useful for backdating events
+      :integration - this call will be sent to the target integration
+      :anonymous-id - the cookie / anonymous Id of this visitor
+  "
   ([^AnalyticsClient client ^String from ^String to] (make-alias client from to {}))
-  ([^AnalyticsClient client ^String from ^String to & [{:keys [timestamp options callback]}]]
-     (let [the-callback (if callback (reify Callback (onResponse [this success message] (callback success message))))
-           options (reduce (fn [t [k v]] (.put t (name k) v)) (context) options)]
-       (.alias client from to timestamp options the-callback))))
+  ([^AnalyticsClient client ^String from ^String to & [{:keys [timestamp integration anonymous-id]}]]
+    (let [options (create-options timestamp integration anonymous-id)]
+      (make-alias* client from to options))))
 
 (defn flush-queue
   "Call flush to block until all the messages are flushed to the server. This is especially useful when turning off your web server
