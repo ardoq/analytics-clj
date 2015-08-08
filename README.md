@@ -3,7 +3,7 @@
 
 Idiomatic Clojure wrapper for the Segment.io Java API.
 
-[API](http://ardoq.github.io/analytics-clj/)
+[API (NB! not updated to latest 0.3.0) ](http://ardoq.github.io/analytics-clj/)
 
 See [Segment.io Java library](https://segment.io/libraries/java) for more info.
 
@@ -25,7 +25,7 @@ If you are using Maven, add the following repository definition to your `pom.xml
 With Leiningen:
 
 ```clj
-[analytics-clj "0.2.2"]
+[analytics-clj "0.3.0"]
 ```
 
 With Maven:
@@ -34,7 +34,7 @@ With Maven:
 <dependency>
   <groupId>analytics-clj</groupId>
   <artifactId>analytics-clj</artifactId>
-  <version>0.2.2</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
